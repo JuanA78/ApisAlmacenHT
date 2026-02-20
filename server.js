@@ -36,9 +36,8 @@ app.get('/', (req, res) => {
 app.use('/api/productos', require('./routes/productosRoutes'));
 app.use('/api/empresas', require('./routes/empresasRoutes'));
 app.use('/api/clientes', require('./routes/clientesRoutes'));
-app.use('/api/movimientos', require('./routes/movimientosRoutes'));
-app.use('/api/productoclientes', require('./routes/productoClienteRoutes'));
-
+app.use('/api/entradas', require('./routes/entradasRoutes'));
+app.use('/api/salidas', require('./routes/salidasRoutes'));
 // ------------------------------------
 // Iniciar servidor
 // ------------------------------------

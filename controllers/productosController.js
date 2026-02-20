@@ -32,35 +32,34 @@ const getProductoByCodigoBarras = async (req, res) => {
   }
 };
 
-// Actualizar precios
+// Actualizar precio de venta
 const updatePrecioProducto = async (req, res) => {
   const { id } = req.params;
-  const { nuevoPrecioVenta, nuevoPrecioCompra } = req.body;
+  const { nuevoPrecioVenta } = req.body;
 
   try {
     const producto = await Producto.findById(id);
     if (!producto) return res.status(404).json({ message: 'Producto no encontrado' });
 
-    if (nuevoPrecioVenta !== undefined) producto.PrecioVenta = nuevoPrecioVenta;
-    if (nuevoPrecioCompra !== undefined) producto.PrecioCompra = nuevoPrecioCompra;
+    if (nuevoPrecioVenta !== undefined) {
+      producto.PrecioVenta = nuevoPrecioVenta;
+    }
 
     await producto.save();
-
-    res.status(200).json({ message: 'Precios actualizados correctamente', producto });
+    res.status(200).json({ message: 'Precio actualizado', producto });
   } catch (error) {
-    res.status(500).json({ message: 'Error al actualizar los precios', error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// ✅ Eliminar producto por ID
+// Eliminar producto
 const deleteProducto = async (req, res) => {
-  const { id } = req.params;
   try {
-    const producto = await Producto.findByIdAndDelete(id);
+    const producto = await Producto.findByIdAndDelete(req.params.id);
     if (!producto) return res.status(404).json({ message: 'Producto no encontrado' });
-    res.status(200).json({ message: 'Producto eliminado correctamente', producto });
+    res.json({ message: 'Producto eliminado', producto });
   } catch (error) {
-    res.status(500).json({ message: 'Error al eliminar el producto', error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 

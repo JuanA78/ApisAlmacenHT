@@ -10,6 +10,6 @@ const {
 router.get('/', getProductos);
 router.post('/', createProducto);
 router.get('/codigoBarras/:codigo', getProductoByCodigoBarras);
-router.patch('/:id/precio', updatePrecioProducto);
+router.put('/:id/precio', updatePrecioProducto);
 
 module.exports = router;

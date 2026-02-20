@@ -1,18 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const {
-  getEmpresas,
-  getEmpresaById,
-  createEmpresa,
-  updateEmpresa,
-  deleteEmpresa
-} = require('../controllers/empresasController');
+const empresaController = require('../controllers/empresasController');
 
-// Rutas
-router.get('/', getEmpresas);
-router.get('/:id', getEmpresaById);
-router.post('/', createEmpresa);
-router.put('/:id', updateEmpresa);
-router.delete('/:id', deleteEmpresa);
+router.get('/', empresaController.getEmpresas);
+router.get('/:id', empresaController.getEmpresaById);
+router.post('/', empresaController.createEmpresa);
+router.put('/:id', empresaController.updateEmpresa);
+router.delete('/:id', empresaController.deleteEmpresa);
 
 module.exports = router;
