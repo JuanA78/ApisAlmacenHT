@@ -25,13 +25,13 @@ const salidaSchema = new mongoose.Schema({
   },
 
   FechaSalida: {
-    type: Date,
-    default: () => {
-      const ahora = new Date();
-      const offsetMs = ahora.getTimezoneOffset() * 60000;
-      return new Date(ahora.getTime() - offsetMs);
-    }
-  },
+   type: Date,
+  default: () => {
+    const hoy = new Date();
+    hoy.setHours(12, 0, 0, 0);
+    return hoy;
+  }
+},
 
   EstatusPago: {
     type: String,
