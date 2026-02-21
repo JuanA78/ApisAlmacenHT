@@ -128,7 +128,6 @@ const crearSalida = async (req, res) => {
       Cliente: clienteNombreFinal,
       ClienteEmpresa: TipoVenta === 'INTERNA' ? ClienteEmpresa : null,
       TipoVenta,
-      FechaSalida,
       EstatusPago,
       Productos: productosSalida
     });
