@@ -7,7 +7,8 @@ const {
   obtenerSalidas,
   actualizarEstatusPago,
   eliminarSalidasPagadas,
-  obtenerProductosPorCliente
+  obtenerProductosPorCliente,
+  devolverProducto
 } = require('../controllers/salidasController');
 
 router.get('/todas', obtenerTodasSalidas);     // TODAS
@@ -16,6 +17,7 @@ router.post('/', crearSalida);
 router.put('/:id/estatus', actualizarEstatusPago);
 router.delete('/pagadas', eliminarSalidasPagadas);
 router.get('/cliente/:clienteId', obtenerProductosPorCliente);
+router.post('/devolver', devolverProducto);
 
 
 module.exports = router;
