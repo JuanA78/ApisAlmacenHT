@@ -62,11 +62,41 @@ const deleteProducto = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+// Actualizar estante y nivel
+const updateUbicacionProducto = async (req, res) => {
+  const { id } = req.params;
+  const { Estante, Nivel } = req.body;
 
+  try {
+    const producto = await Producto.findById(id);
+    if (!producto) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    if (Estante !== undefined) {
+      producto.Estante = Estante;
+    }
+
+    if (Nivel !== undefined) {
+      producto.Nivel = Nivel;
+    }
+
+    await producto.save();
+
+    res.status(200).json({
+      message: 'Ubicación actualizada',
+      producto
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   getProductos,
   createProducto,
   getProductoByCodigoBarras,
   updatePrecioProducto,
-  deleteProducto
+  deleteProducto,
+  updateUbicacionProducto
 };
