@@ -5,7 +5,7 @@ const {
   createProducto,
   getProductoByCodigoBarras,
   updatePrecioProducto,
-  updateUbicacionProducto, 
+  updateProducto, 
   deleteProducto 
 } = require('../controllers/productosController');
 
@@ -14,6 +14,6 @@ router.post('/', createProducto);
 router.get('/codigoBarras/:codigo', getProductoByCodigoBarras);
 router.put('/:id/precio', updatePrecioProducto);
 router.delete('/:id', deleteProducto);
-router.put('/:id/ubicacion', updateUbicacionProducto);
+router.put('/:id', updateProducto);
 
 module.exports = router;
