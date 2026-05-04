@@ -89,11 +89,31 @@ const updateProducto = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+// Buscar productos por marca
+const getProductosByMarca = async (req, res) => {
+  try {
+    const { marca } = req.params;
+
+    const productos = await Producto.find({
+      Marca: { $regex: marca, $options: 'i' } // 🔥 búsqueda flexible (case insensitive)
+    });
+
+    if (productos.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron productos con esa marca' });
+    }
+
+    res.json(productos);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 module.exports = {
   getProductos,
   createProducto,
   getProductoByCodigoBarras,
   updatePrecioProducto,
   deleteProducto,
-  updateProducto
+  updateProducto,
+  getProductosByMarca
 };

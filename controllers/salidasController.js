@@ -328,7 +328,12 @@ const devolverProducto = async (req, res) => {
 const obtenerTodasSalidas = async (req, res) => {
   try {
     const salidas = await Salida.find()
-      .populate('ClienteEmpresa')
+      .populate({
+  path: 'ClienteEmpresa',
+  populate: {
+    path: 'empresa'
+  }
+})
       .populate('Productos.producto')
       .sort({ FolioSalida: -1 });
 
@@ -346,7 +351,12 @@ const obtenerSalidas = async (req, res) => {
     const salidas = await Salida.find({
       EstatusPago: { $ne: 'PAGADO' }
     })
-      .populate('ClienteEmpresa')
+      .populate({
+  path: 'ClienteEmpresa',
+  populate: {
+    path: 'empresa'
+  }
+})
       .populate('Productos.producto')
       .sort({ FolioSalida: -1 });
 

@@ -6,7 +6,8 @@ const {
   getProductoByCodigoBarras,
   updatePrecioProducto,
   updateProducto, 
-  deleteProducto 
+  deleteProducto,
+  getProductosByMarca
 } = require('../controllers/productosController');
 
 router.get('/', getProductos);
@@ -15,5 +16,6 @@ router.get('/codigoBarras/:codigo', getProductoByCodigoBarras);
 router.put('/:id/precio', updatePrecioProducto);
 router.delete('/:id', deleteProducto);
 router.put('/:id', updateProducto);
+router.get('/marca/:marca', getProductosByMarca);
 
 module.exports = router;
