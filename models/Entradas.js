@@ -12,11 +12,7 @@ const compraSchema = new mongoose.Schema({
   PrecioCompra: { type: Number, required: true },
 FechaCompra: {
   type: Date,
-  default: () => {
-    const hoy = new Date();
-    hoy.setHours(12, 0, 0, 0); // mediodía para evitar saltos de día
-    return hoy;
-  }
+  required: true 
 }});
 
 module.exports = mongoose.model('Entradas', compraSchema);

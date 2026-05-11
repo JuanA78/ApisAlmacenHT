@@ -9,7 +9,8 @@ const registrarCompra = async (req, res) => {
     NoParte,
     FolioCompra,
     Cantidad,
-    PrecioCompra
+    PrecioCompra,
+    FechaCompra
   } = req.body;
 
   try {
@@ -24,7 +25,8 @@ const registrarCompra = async (req, res) => {
       FolioCompra,
       CantidadInicial: Cantidad,
       CantidadDisponible: Cantidad,
-      PrecioCompra
+      PrecioCompra,
+      FechaCompra: FechaCompra
     });
 
     await lote.save();

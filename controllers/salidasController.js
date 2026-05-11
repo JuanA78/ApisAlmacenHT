@@ -14,7 +14,8 @@ const crearSalida = async (req, res) => {
     ClienteEmpresa,
     EstatusPago,
     TipoVenta,
-    Productos
+    Productos,
+    FechaSalida
   } = req.body;
 
   if (!Productos || Productos.length === 0) {
@@ -97,7 +98,8 @@ const crearSalida = async (req, res) => {
       ClienteEmpresa: TipoVenta === 'INTERNA' ? ClienteEmpresa : null,
       TipoVenta,
       EstatusPago,
-      Productos: productosSalida
+      Productos: productosSalida,
+      FechaSalida: FechaSalida || new Date()
     });
 
     await salida.save({ session });

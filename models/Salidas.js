@@ -26,13 +26,9 @@ const salidaSchema = new mongoose.Schema({
   },
 
   FechaSalida: {
-    type: Date,
-    default: () => {
-      const hoy = new Date();
-      hoy.setHours(12, 0, 0, 0);
-      return hoy;
-    }
-  },
+  type: Date,
+  required: true  
+},
 
   EstatusPago: {
     type: String,
