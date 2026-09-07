@@ -35,6 +35,10 @@ const salidaSchema = new mongoose.Schema({
     enum: ['PAGADO', 'NO PAGADO', 'PENDIENTE'],
     default: 'PENDIENTE'
   },
+  Descuento: {
+  type: Number,
+  default: 0
+},
 
   Productos: [
     {

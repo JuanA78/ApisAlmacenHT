@@ -44,20 +44,51 @@ const registrarCompra = async (req, res) => {
 };
 
 /**
- * OBTENER TODAS LAS ENTRADAS
+ * OBTENER TODAS LAS ENTRADAS (Con Paginación, Filtro por Nombre y Orden Descendente)
  */
 const getEntradas = async (req, res) => {
   try {
-    const entradas = await LotesCompra.find()
-      .populate('producto', 'NombreProducto NoParte')
-      .sort({ FechaCompra: 1 }); // FIFO
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100; // Por defecto 100 por página
+    const skip = (page - 1) * limit;
 
-    res.json(entradas);
+    const { nombre } = req.query;
+
+    let matchProducto = {};
+
+    // Si envían un nombre, buscamos los IDs de los productos que coincidan
+    if (nombre && nombre.trim() !== '') {
+      const regex = new RegExp(nombre.trim(), 'i');
+      const productosCoincidentes = await Producto.find({ NombreProducto: regex }).select('_id');
+      const idsProductos = productosCoincidentes.map(p => p._id);
+
+      matchProducto = { producto: { $in: idsProductos } };
+    }
+
+    // Ejecutamos la consulta y el conteo en paralelo
+    const [entradas, total] = await Promise.all([
+      LotesCompra.find(matchProducto)
+        .populate('producto', 'NombreProducto NoParte')
+        .sort({ FechaCompra: -1, _id: -1 }) // -1 Ordena de la MÁS RECIENTE a la MÁS ANTIGUA
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      LotesCompra.countDocuments(matchProducto)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      totalEntradas: total,
+      paginaActual: page,
+      totalPaginas: totalPages,
+      entradasPorPagina: entradas.length,
+      data: entradas
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 /**
  * OBTENER ENTRADA POR ID
  */

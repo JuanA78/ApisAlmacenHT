@@ -1,10 +1,70 @@
 const Producto = require('../models/Productos');
 
-// Obtener todos los productos
+// Obtener productos paginados de 50 en 50 (con Búsqueda, Filtros y Ordenamiento)
 const getProductos = async (req, res) => {
   try {
-    const productos = await Producto.find();
-    res.json(productos);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const skip = (page - 1) * limit;
+
+    // Extraer parámetros de búsqueda y orden de la URL
+    const { search, estante, marca, proveedor, sortBy, sortOrder } = req.query;
+
+    // Construcción del objeto de filtro para Mongoose
+    let filter = {};
+
+    // 1. Búsqueda flexible (search) por Nombre, Proveedor o Marca
+    if (search && search.trim() !== '') {
+      const regex = new RegExp(search.trim(), 'i'); // 'i' para insensible a mayúsculas/minúsculas
+      filter.$or = [
+        { NombreProducto: regex },
+        { Proveedor: regex },
+        { Marca: regex }
+      ];
+    }
+
+    if (marca && marca.trim() !== '') {
+      filter.Marca = new RegExp(marca.trim(), 'i');
+    }
+
+    if (proveedor && proveedor.trim() !== '') {
+      filter.Proveedor = new RegExp(proveedor.trim(), 'i');
+    }
+
+    if (estante && estante.trim() !== '') {
+      filter.Estante = new RegExp(estante.trim(), 'i');
+    }
+
+    // 2. Configuración del Ordenamiento (Abecedario A-Z/Z-A o Estante)
+    let sortOptions = {};
+    const order = sortOrder === 'desc' ? -1 : 1; // 1 = A-Z (Ascendente), -1 = Z-A (Descendente)
+
+    if (sortBy === 'estante') {
+      sortOptions = { Estante: order, NombreProducto: 1 };
+    } else {
+      // Por defecto o si piden por abecedario/nombre
+      sortOptions = { NombreProducto: order };
+    }
+
+    // Ejecutamos la consulta y el conteo en paralelo aplicando el filtro y el ordenamiento
+    const [productos, total] = await Promise.all([
+      Producto.find(filter)
+        .sort(sortOptions)    // <-- Aplica el ordenamiento aquí
+        .lean()               // Desconecta métodos pesados de Mongoose
+        .skip(skip)           // Salta los productos de páginas anteriores
+        .limit(limit),        // Carga exactamente el límite (50 por defecto)
+      Producto.countDocuments(filter) // Cuenta el total respetando el filtro
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      totalProductos: total,
+      paginaActual: page,
+      totalPaginas: totalPages,
+      productosPorPagina: productos.length,
+      data: productos
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

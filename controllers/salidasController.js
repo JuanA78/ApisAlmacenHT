@@ -15,7 +15,8 @@ const crearSalida = async (req, res) => {
     EstatusPago,
     TipoVenta,
     Productos,
-    FechaSalida
+    FechaSalida,
+    Descuento 
   } = req.body;
 
   if (!Productos || Productos.length === 0) {
@@ -99,7 +100,8 @@ const crearSalida = async (req, res) => {
       TipoVenta,
       EstatusPago,
       Productos: productosSalida,
-      FechaSalida: FechaSalida || new Date()
+      FechaSalida: FechaSalida || new Date(),
+        Descuento: Number(Descuento) || 0
     });
 
     await salida.save({ session });
@@ -325,21 +327,134 @@ const devolverProducto = async (req, res) => {
   }
 };
 //////////////////////////////////////////////////////
-// 📄 OBTENER TODAS
+// 📄 OBTENER TODAS (PAGINADO, FILTRADO Y ORDENADO POR FOLIO MAYOR -> MENOR)
 //////////////////////////////////////////////////////
 const obtenerTodasSalidas = async (req, res) => {
   try {
-    const salidas = await Salida.find()
-      .populate({
-  path: 'ClienteEmpresa',
-  populate: {
-    path: 'empresa'
-  }
-})
-      .populate('Productos.producto')
-      .sort({ FolioSalida: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const clienteFiltro = req.query.cliente ? req.query.cliente.trim() : '';
 
-    res.json(salidas);
+    const skip = (page - 1) * limit;
+
+    // Construcción del pipeline de Agregación
+    const pipeline = [];
+
+    // Si viene término de búsqueda por Cliente (insensible a mayúsculas/minúsculas)
+    if (clienteFiltro) {
+      pipeline.push({
+        $match: {
+          Cliente: { $regex: clienteFiltro, $options: 'i' }
+        }
+      });
+    }
+
+    // Facet para contar total y traer la página actual de un solo golpe
+    pipeline.push({
+      $facet: {
+        totalData: [
+          { $count: 'total' }
+        ],
+        paginatedResults: [
+          { $sort: { FolioSalida: -1 } }, // Mayor a menor por Folio
+          { $skip: skip },
+          { $limit: limit },
+
+          // Populate de ClienteEmpresa
+          {
+            $lookup: {
+              from: 'clientes', // Nombre de la colección en BD
+              localField: 'ClienteEmpresa',
+              foreignField: '_id',
+              as: 'ClienteEmpresaInfo'
+            }
+          },
+          {
+            $unwind: {
+              path: '$ClienteEmpresaInfo',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+
+          // Populate de la Empresa dentro de ClienteEmpresa
+          {
+            $lookup: {
+              from: 'empresas',
+              localField: 'ClienteEmpresaInfo.empresa',
+              foreignField: '_id',
+              as: 'ClienteEmpresaInfo.empresa'
+            }
+          },
+          {
+            $unwind: {
+              path: '$ClienteEmpresaInfo.empresa',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+
+          // Populate de la lista de productos dentro de la salida
+          {
+            $unwind: {
+              path: '$Productos',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $lookup: {
+              from: 'productos',
+              localField: 'Productos.producto',
+              foreignField: '_id',
+              as: 'Productos.productoInfo'
+            }
+          },
+          {
+            $unwind: {
+              path: '$Productos.productoInfo',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          // Reestructuración para simular la propiedad "producto" populada
+          {
+            $addFields: {
+              'Productos.producto': '$Productos.productoInfo'
+            }
+          },
+          // Reagrupar los productos por Salida
+          {
+            $group: {
+              _id: '$_id',
+              FolioSalida: { $first: '$FolioSalida' },
+              Cliente: { $first: '$Cliente' },
+              ClienteEmpresa: { $first: '$ClienteEmpresaInfo' },
+              TipoVenta: { $first: '$TipoVenta' },
+              EstatusPago: { $first: '$EstatusPago' },
+              Productos: { $push: '$Productos' },
+              FechaSalida: { $first: '$FechaSalida' },
+              createdAt: { $first: '$createdAt' },
+              updatedAt: { $first: '$updatedAt' }
+            }
+          },
+
+          // Asegurar de nuevo el orden descendente tras el $group
+          { $sort: { FolioSalida: -1 } }
+        ]
+      }
+    });
+
+    const result = await Salida.aggregate(pipeline);
+
+    const totalSalidas = result[0].totalData[0] ? result[0].totalData[0].total : 0;
+    const salidas = result[0].paginatedResults || [];
+    const totalPaginas = Math.ceil(totalSalidas / limit);
+
+    res.json({
+      totalSalidas,
+      totalPaginas,
+      paginaActual: page,
+      limitePorPagina: limit,
+      data: salidas
+    });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

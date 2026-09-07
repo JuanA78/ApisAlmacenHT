@@ -2,6 +2,7 @@ require('dotenv').config();          // Carga las variables de entorno desde .en
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./mongoConfig');
+const verificarToken = require('./middleware/authMiddleware');
 
 const app = express();
 
@@ -33,11 +34,12 @@ app.get('/', (req, res) => {
 // ------------------------------------
 // Rutas de la API
 // ------------------------------------
-app.use('/api/productos', require('./routes/productosRoutes'));
-app.use('/api/empresas', require('./routes/empresasRoutes'));
-app.use('/api/clientes', require('./routes/clientesRoutes'));
-app.use('/api/entradas', require('./routes/entradasRoutes'));
-app.use('/api/salidas', require('./routes/salidasRoutes'));
+app.use('/api/productos',verificarToken, require('./routes/productosRoutes'));
+app.use('/api/empresas',verificarToken, require('./routes/empresasRoutes'));
+app.use('/api/clientes',verificarToken, require('./routes/clientesRoutes'));
+app.use('/api/entradas',verificarToken, require('./routes/entradasRoutes'));
+app.use('/api/salidas',verificarToken, require('./routes/salidasRoutes'));
+app.use('/api/usuarios', require('./routes/usuariosRoutes'));
 // ------------------------------------
 // Iniciar servidor
 // ------------------------------------
