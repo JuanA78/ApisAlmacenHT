@@ -39,6 +39,7 @@ app.use('/api/empresas',verificarToken, require('./routes/empresasRoutes'));
 app.use('/api/clientes',verificarToken, require('./routes/clientesRoutes'));
 app.use('/api/entradas',verificarToken, require('./routes/entradasRoutes'));
 app.use('/api/salidas',verificarToken, require('./routes/salidasRoutes'));
+app.use('/api/auditorias', verificarToken, require('./routes/auditoriasRoutes'));
 app.use('/api/usuarios', require('./routes/usuariosRoutes'));
 // ------------------------------------
 // Iniciar servidor

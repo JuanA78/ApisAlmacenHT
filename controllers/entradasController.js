@@ -1,5 +1,6 @@
 const Producto = require('../models/Productos');
 const LotesCompra = require('../models/Entradas');
+const Auditoria = require('../models/Auditoria');
 
 /**
  * REGISTRAR ENTRADA
@@ -34,10 +35,19 @@ const registrarCompra = async (req, res) => {
     producto.ExistenciaTotal += Cantidad;
     await producto.save();
 
-    res.status(201).json({
-      message: 'Entrada registrada correctamente',
-      lote
-    });
+   await Auditoria.create({
+    usuarioId: req.usuario.id,
+    usuario: req.usuario.usuario,
+    rol: req.usuario.rol,
+    accion: 'CREAR',
+    modulo: 'ENTRADAS',
+    descripcion: `Se registró una entrada de ${Cantidad} unidades del producto ${producto.NombreProducto}, folio ${FolioCompra}`
+});
+
+res.status(201).json({
+    message: 'Entrada registrada correctamente',
+    lote
+});
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -125,9 +135,24 @@ const deleteEntradaById = async (req, res) => {
       });
     }
 
-    await entrada.deleteOne();
 
-    res.json({ message: 'Lote eliminado correctamente' });
+const folioCompra = entrada.FolioCompra;
+const cantidad = entrada.CantidadInicial;
+
+await entrada.deleteOne();
+
+await Auditoria.create({
+    usuarioId: req.usuario.id,
+    usuario: req.usuario.usuario,
+    rol: req.usuario.rol,
+    accion: 'ELIMINAR',
+    modulo: 'ENTRADAS',
+    descripcion: `Se eliminó una entrada con folio ${folioCompra} y cantidad inicial de ${cantidad} unidades`
+});
+
+res.json({
+    message: 'Lote eliminado correctamente'
+});
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

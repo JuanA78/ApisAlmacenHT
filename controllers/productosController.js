@@ -1,4 +1,5 @@
 const Producto = require('../models/Productos');
+const Auditoria = require('../models/Auditoria');
 
 // Obtener productos paginados de 50 en 50 (con Búsqueda, Filtros y Ordenamiento)
 const getProductos = async (req, res) => {
@@ -19,7 +20,8 @@ const getProductos = async (req, res) => {
       filter.$or = [
         { NombreProducto: regex },
         { Proveedor: regex },
-        { Marca: regex }
+        { Marca: regex },
+        { NoParte: regex }
       ];
     }
 
@@ -73,9 +75,21 @@ const getProductos = async (req, res) => {
 // Crear producto
 const createProducto = async (req, res) => {
   try {
-    const nuevoProducto = new Producto(req.body);
+  const nuevoProducto = new Producto(req.body);
+
     await nuevoProducto.save();
+
+    await Auditoria.create({
+      usuarioId: req.usuario.id,
+      usuario: req.usuario.usuario,
+      rol: req.usuario.rol,
+      accion: 'CREAR',
+      modulo: 'PRODUCTOS',
+      descripcion: `Se creó el producto ${nuevoProducto.NombreProducto}, No. Parte: ${nuevoProducto.NoParte}`
+    });
+
     res.status(201).json(nuevoProducto);
+
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -106,7 +120,20 @@ const updatePrecioProducto = async (req, res) => {
     }
 
     await producto.save();
-    res.status(200).json({ message: 'Precio actualizado', producto });
+
+await Auditoria.create({
+  usuarioId: req.usuario.id,
+  usuario: req.usuario.usuario,
+  rol: req.usuario.rol,
+  accion: 'ACTUALIZAR_PRECIO',
+  modulo: 'PRODUCTOS',
+  descripcion: `Se actualizó el precio del producto ${producto.NombreProducto} a $${producto.PrecioVenta}`
+});
+
+res.status(200).json({
+  message: 'Precio actualizado',
+  producto
+});
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -117,6 +144,15 @@ const deleteProducto = async (req, res) => {
   try {
     const producto = await Producto.findByIdAndDelete(req.params.id);
     if (!producto) return res.status(404).json({ message: 'Producto no encontrado' });
+
+      await Auditoria.create({
+      usuarioId: req.usuario.id,
+      usuario: req.usuario.usuario,
+      rol: req.usuario.rol,
+      accion: 'ELIMINAR',
+      modulo: 'PRODUCTOS',
+      descripcion: `Se eliminó el producto ${producto.NombreProducto}, No. Parte: ${producto.NoParte}`
+    });
     res.json({ message: 'Producto eliminado', producto });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -139,6 +175,15 @@ const updateProducto = async (req, res) => {
     if (!productoActualizado) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
+
+    await Auditoria.create({
+  usuarioId: req.usuario.id,
+  usuario: req.usuario.usuario,
+  rol: req.usuario.rol,
+  accion: 'ACTUALIZAR',
+  modulo: 'PRODUCTOS',
+  descripcion: `Se actualizó el producto ${productoActualizado.NombreProducto}, No. Parte: ${productoActualizado.NoParte}`
+});
 
     res.status(200).json({
       message: 'Producto actualizado correctamente',

@@ -4,6 +4,7 @@ const Producto = require('../models/Productos');
 const Contador = require('../models/Contador');
 const LotesCompra = require('../models/Entradas');
 const Cliente = require('../models/Cliente');
+const Auditoria = require('../models/Auditoria');
 
 //////////////////////////////////////////////////////
 // ➕ CREAR SALIDA
@@ -106,6 +107,15 @@ const crearSalida = async (req, res) => {
 
     await salida.save({ session });
 
+    await Auditoria.create([{
+  usuarioId: req.usuario.id,
+  usuario: req.usuario.usuario,
+  rol: req.usuario.rol,
+  accion: 'CREAR',
+  modulo: 'SALIDAS',
+  descripcion: `Se creó la salida con folio ${salida.FolioSalida} para el cliente ${salida.Cliente}, con ${salida.Productos.length} producto(s)`
+}], { session });
+
     await session.commitTransaction();
     session.endSession();
 
@@ -118,9 +128,6 @@ const crearSalida = async (req, res) => {
   }
 };
 
-//////////////////////////////////////////////////////
-// 🔄 DEVOLVER PRODUCTO
-//////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 // 🔄 DEVOLVER PRODUCTO (CON LOGS DETALLADOS)
 //////////////////////////////////////////////////////
@@ -293,6 +300,20 @@ const devolverProducto = async (req, res) => {
     // PASO 8: Guardar la salida
     console.log('PASO 8 - Guardando salida actualizada');
     await salida.save({ session });
+
+await salida.save({ session });
+
+  await Auditoria.create([{
+    usuarioId: req.usuario.id,
+    usuario: req.usuario.usuario,
+    rol: req.usuario.rol,
+    accion: 'DEVOLVER',
+    modulo: 'SALIDAS',
+    descripcion: `Se devolvieron ${cantidadADevolver} unidad(es) del producto ${productoSalida.NombreProducto} en la salida con folio ${salida.FolioSalida}`
+  }], { session });
+
+
+
     console.log('Salida guardada exitosamente');
     
     // PASO 9: Confirmar transacción
@@ -428,6 +449,7 @@ const obtenerTodasSalidas = async (req, res) => {
               ClienteEmpresa: { $first: '$ClienteEmpresaInfo' },
               TipoVenta: { $first: '$TipoVenta' },
               EstatusPago: { $first: '$EstatusPago' },
+              Descuento: { $first: '$Descuento' },
               Productos: { $push: '$Productos' },
               FechaSalida: { $first: '$FechaSalida' },
               createdAt: { $first: '$createdAt' },
@@ -507,18 +529,39 @@ const actualizarEstatusPago = async (req, res) => {
   try {
 
     const salida = await Salida.findById(req.params.id);
-    if (!salida) return res.status(404).json({ message: 'No encontrada' });
 
-    salida.EstatusPago = req.body.EstatusPago;
+    if (!salida) {
+      return res.status(404).json({
+        message: 'No encontrada'
+      });
+    }
+
+    const estatusAnterior = salida.EstatusPago;
+    const nuevoEstatus = req.body.EstatusPago;
+
+    salida.EstatusPago = nuevoEstatus;
+
     await salida.save();
+
+    await Auditoria.create({
+      usuarioId: req.usuario.id,
+      usuario: req.usuario.usuario,
+      rol: req.usuario.rol,
+      accion: 'ACTUALIZAR_PAGO',
+      modulo: 'SALIDAS',
+      descripcion: `Se actualizó el estatus de pago de la salida con folio ${salida.FolioSalida} de ${estatusAnterior} a ${nuevoEstatus}`
+    });
 
     res.json(salida);
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+
+    res.status(500).json({
+      error: error.message
+    });
+
   }
 };
-
 //////////////////////////////////////////////////////
 // ❌ ELIMINAR PAGADAS
 //////////////////////////////////////////////////////
